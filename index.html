@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมทบทวนค่าเฉลี่ย: ภารกิจร้านคัพเค้ก</title>
+    <style>
+        /* CSS Variables สำหรับโทนสีพาสเทล */
+        :root {
+            --bg-color: #FFF5E1; /* ครีมพาสเทล */
+            --card-bg: #FFFFFF;
+            --primary-color: #FFB7B2; /* ชมพูพาสเทล */
+            --primary-hover: #FF9E99;
+            --secondary-color: #CFFDDF; /* มิ้นต์พาสเทล */
+            --secondary-hover: #A0F0BB;
+            --text-main: #5C4A4D;
+            --text-light: #8C7A7D;
+            --correct-color: #B2FBA5;
+            --wrong-color: #FFD1DC;
+            --hint-bg: #FFF0F5;
+        }
+
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 640px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 30px;
+            position: relative;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* ปุ่มเปิด-ปิดเสียง */
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .sound-toggle:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* SVG Cupcake Icon Style */
+        .cupcake-icon {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* ช่วงที่ 1: Intro */
+        #intro-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .intro-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+
+        .data-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .data-item {
+            background-color: var(--secondary-color);
+            padding: 15px 20px;
+            border-radius: 16px;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            animation: floatUp 2s infinite ease-in-out alternate;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* ทำให้แต่ละตัวเลขขยับไม่พร้อมกัน */
+        .data-item:nth-child(1) { animation-delay: 0s; }
+        .data-item:nth-child(2) { animation-delay: 0.2s; }
+        .data-item:nth-child(3) { animation-delay: 0.4s; }
+        .data-item:nth-child(4) { animation-delay: 0.6s; }
+        .data-item:nth-child(5) { animation-delay: 0.8s; }
+
+        .btn-start {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 183, 178, 0.4);
+        }
+
+        .btn-start:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        /* ช่วงที่ 2 & 3: Game Screen */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* กล่องโจทย์ค้างตลอด */
+        .sticky-header {
+            background-color: var(--secondary-color);
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border: 2px dashed #A0F0BB;
+        }
+
+        .step-container {
+            background-color: #FDFDFD;
+            border: 2px solid #F0F0F0;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background-color: #F8F9FA;
+            border: 2px solid #E9ECEF;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-hover);
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct-color);
+            border-color: #82E076;
+            font-weight: bold;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-color);
+            border-color: #FF9E99;
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            font-size: 16px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s;
+        }
+
+        .feedback-box.show {
+            display: block;
+        }
+
+        .feedback-wrong {
+            background-color: #FFF0F5;
+            color: #D8436A;
+            border-left: 4px solid #FFB7B2;
+        }
+
+        .feedback-correct {
+            background-color: #F0FFF4;
+            color: #2E7D32;
+            border-left: 4px solid #B2FBA5;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .btn-next, .btn-hint {
+            background-color: var(--text-light);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+        }
+
+        .btn-next {
+            background-color: var(--primary-color);
+            display: none;
+            font-weight: bold;
+        }
+
+        .btn-next:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-hint {
+            background-color: #FFE4B5;
+            color: #D2691E;
+            margin-right: 10px;
+        }
+        
+        .btn-hint:hover {
+            background-color: #FFDAB9;
+        }
+
+        .hints-container {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--hint-bg);
+            border-radius: 12px;
+            border: 1px dashed #FFB6C1;
+            display: none;
+        }
+
+        .hint-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #FFE4E1;
+            color: #8B5A2B;
+            font-size: 15px;
+            display: none; /* ซ่อนไว้ก่อน แสดงทีละอัน */
+        }
+        
+        .hint-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .final-celebration {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            animation: fadeIn 1s;
+        }
+
+        .glow-cupcake {
+            transform: scale(2);
+            margin: 30px 0;
+            filter: drop-shadow(0 0 15px rgba(255, 183, 178, 0.8));
+            animation: floatUp 2s infinite alternate ease-in-out;
+        }
+
+        .controls-area {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes floatUp {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-8px); }
+        }
+
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <button class="sound-toggle" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+        <div id="intro-screen">
+            <div id="main-icon" style="width: 80px; height: 80px;"></div>
+            
+            <div class="intro-text">
+                “มาดูอีกตัวอย่างกันนะ ในห้าวัน ร้านเบเกอรี่ขายคัพเค้กได้วันละยี่สิบ สามสิบ สี่สิบ ห้าสิบ และหกสิบชิ้น”
+            </div>
+
+            <div class="data-display" id="intro-data">
+                </div>
+
+            <button class="btn-start" onclick="startGame()">เริ่มภารกิจ</button>
+        </div>
+
+        <div id="game-screen">
+            
+            <div class="sticky-header">
+                <span id="tiny-icon-header" style="width: 24px; height: 24px;"></span>
+                ข้อมูลยอดขาย 5 วัน: 20, 30, 40, 50, 60
+            </div>
+
+            <div class="step-container" id="question-container">
+                <div class="question-text" id="q-text"></div>
+                <div class="options-grid" id="options-grid">
+                    </div>
+                
+                <div id="feedback-box" class="feedback-box"></div>
+                
+                <div class="controls-area">
+                    <button class="btn-hint" id="btn-hint" onclick="showNextHint()">💡 ขอคำใบ้</button>
+                    <button class="btn-next" id="btn-next" onclick="nextStep()">ขั้นต่อไป ➔</button>
+                </div>
+                
+                <div class="hints-container" id="hints-container">
+                    <div class="hint-item" id="hint-1">💡 Hint 1: ลองนำข้อมูลทั้งหมดมารวมกันก่อน</div>
+                    <div class="hint-item" id="hint-2">💡 Hint 2: เมื่อรวมกันแล้วจะได้ทั้งหมด 200</div>
+                    <div class="hint-item" id="hint-3">💡 Hint 3: จากนั้นนำไปหารด้วยจำนวนข้อมูล 5 วัน</div>
+                </div>
+            </div>
+
+            <div class="final-celebration" id="final-screen">
+                <div class="glow-cupcake" id="glow-icon" style="width: 60px; height: 60px;"></div>
+                <h2 style="color: var(--text-main); margin-bottom: 5px;">ถูกต้อง 🎉</h2>
+                <h3 style="color: #2E7D32; margin-top: 0;">ค่าเฉลี่ยคือ 40 ชิ้นต่อวัน</h3>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- ส่วนของการสร้าง SVG Cupcake ---
+        const getCupcakeSVG = () => `
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <path d="M18 36 L24 60 L40 60 L46 36 Z" fill="#E6C280"/>
+            <line x1="23" y1="36" x2="27" y2="60" stroke="#C8A058" stroke-width="2"/>
+            <line x1="32" y1="36" x2="32" y2="60" stroke="#C8A058" stroke-width="2"/>
+            <line x1="41" y1="36" x2="37" y2="60" stroke="#C8A058" stroke-width="2"/>
+            
+            <path d="M12 36 Q 10 20 32 8 Q 54 20 52 36 Z" fill="#FFB7B2"/>
+            <path d="M8 36 Q 16 42 24 36 Q 32 42 40 36 Q 48 42 56 36 Q 52 28 48 30 Z" fill="#FFB7B2"/>
+            
+            <line x1="22" y1="26" x2="26" y2="28" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+            <line x1="40" y1="20" x2="44" y2="22" stroke="#CFFDDF" stroke-width="2" stroke-linecap="round"/>
+            <line x1="30" y1="16" x2="32" y2="18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+            <line x1="26" y1="32" x2="28" y2="34" stroke="#CFFDDF" stroke-width="2" stroke-linecap="round"/>
+            <line x1="44" y1="28" x2="42" y2="30" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        `;
+
+        // ใส่ SVG เข้าไปในจุดต่างๆ
+        document.getElementById('main-icon').innerHTML = getCupcakeSVG();
+        document.getElementById('tiny-icon-header').innerHTML = getCupcakeSVG();
+        document.getElementById('glow-icon').innerHTML = getCupcakeSVG();
+
+        // สร้างข้อมูลหน้า Intro
+        const introData = [20, 30, 40, 50, 60];
+        const introContainer = document.getElementById('intro-data');
+        introData.forEach(num => {
+            const div = document.createElement('div');
+            div.className = 'data-item';
+            div.innerHTML = `<div style="width: 32px; height: 32px;">${getCupcakeSVG()}</div><span>${num}</span>`;
+            introContainer.appendChild(div);
+        });
+
+        // --- ระบบเสียง (Web Audio API) ---
+        let audioCtx;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if(audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            isMuted = !isMuted;
+            document.getElementById('soundBtn').innerText = isMuted ? '🔇' : '🔊';
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } 
+            else if (type === 'wrong') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } 
+            else if (type === 'correct') {
+                // Arpeggio ขึ้น (C5 E5 G5 C6)
+                osc.type = 'sine';
+                const now = audioCtx.currentTime;
+                
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.setValueAtTime(0.3, now + 0.3);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                
+                osc.start();
+                osc.stop(now + 0.6);
+            }
+        }
+
+        // --- ข้อมูลคำถาม 3 ขั้นตอน ---
+        const questions = [
+            {
+                step: 1,
+                question: "ขั้นที่ 1: เมื่อนำข้อมูลทั้งหมดมารวมกัน จะได้เท่าไร",
+                options: [
+                    { label: "A", value: 100, text: "100" },
+                    { label: "B", value: 150, text: "150" },
+                    { label: "C", value: 200, text: "200", correct: true },
+                    { label: "D", value: 300, text: "300" }
+                ],
+                feedbacks: {
+                    100: "ยังไม่ถูก ลองรวมข้อมูลทั้ง 5 วันให้ครบอีกครั้ง",
+                    150: "ผลรวมนี้ยังน้อยเกินไป เพราะยังรวมข้อมูลได้ไม่ครบ",
+                    300: "ผลรวมนี้มากเกินไป ลองบวกทีละจำนวนอีกครั้ง"
+                },
+                correctMsg: "ถูกต้อง ผลรวมทั้งหมดคือ 200"
+            },
+            {
+                step: 2,
+                question: "ขั้นที่ 2: ข้อมูลชุดนี้มีทั้งหมดกี่วัน",
+                options: [
+                    { label: "A", value: 4, text: "4" },
+                    { label: "B", value: 5, text: "5", correct: true },
+                    { label: "C", value: 6, text: "6" },
+                    { label: "D", value: 200, text: "200" }
+                ],
+                feedbacks: {
+                    4: "ข้อมูลมีมากกว่า 4 วัน ลองนับใหม่ให้ครบ",
+                    6: "ข้อมูลมีเพียง 5 ค่า ไม่ใช่ 6 ค่า",
+                    200: "200 คือผลรวม ไม่ใช่จำนวนวัน"
+                },
+                correctMsg: "ถูกต้อง มีข้อมูลทั้งหมด 5 วัน"
+            },
+            {
+                step: 3,
+                question: "ขั้นที่ 3: เมื่อนำผลรวม 200 หารด้วย 5 วัน จะได้ค่าเฉลี่ยเท่าไร",
+                options: [
+                    { label: "A", value: 30, text: "30" },
+                    { label: "B", value: 40, text: "40", correct: true },
+                    { label: "C", value: 50, text: "50" },
+                    { label: "D", value: 200, text: "200" }
+                ],
+                feedbacks: {
+                    30: "30 เป็นค่าน้อยเกินไป เพราะข้อมูลบางวันสูงถึง 50 และ 60",
+                    50: "50 เป็นค่ามากเกินไป เพราะมีหลายวันที่ค่าน้อยกว่า เช่น 20 และ 30",
+                    200: "200 เป็นผลรวมของข้อมูลทั้งหมด ยังไม่ได้หารด้วยจำนวนวัน"
+                },
+                correctMsg: "" // ของขั้น 3 จะแสดงที่หน้าฉลองจบ
+            }
+        ];
+
+        let currentStepIndex = 0;
+        let currentHintLevel = 0;
+        let isStepAnswered = false;
+
+        function startGame() {
+            playSound('click');
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const qData = questions[currentStepIndex];
+            document.getElementById('q-text').innerText = qData.question;
+            
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+            
+            qData.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                // นำ icon จิ๋วใส่ในปุ่ม
+                btn.innerHTML = `<span style="width: 16px; height: 16px;">${getCupcakeSVG()}</span> ${opt.label}. ${opt.text}`;
+                btn.onclick = () => selectOption(opt, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            // รีเซ็ต UI ของกล่องตอบรับ
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.className = 'feedback-box';
+            feedbackBox.innerHTML = '';
+            
+            document.getElementById('btn-next').style.display = 'none';
+            isStepAnswered = false;
+        }
+
+        function selectOption(opt, btnElement) {
+            if (isStepAnswered) return;
+            
+            const qData = questions[currentStepIndex];
+            const feedbackBox = document.getElementById('feedback-box');
+            
+            if (opt.correct) {
+                playSound('correct');
+                btnElement.classList.add('correct');
+                isStepAnswered = true;
+                
+                // Disable ปุ่มอื่นๆ
+                Array.from(document.getElementById('options-grid').children).forEach(btn => {
+                    if (btn !== btnElement) btn.disabled = true;
+                });
+
+                if (currentStepIndex < 2) {
+                    // ขั้น 1 และ 2
+                    feedbackBox.innerHTML = qData.correctMsg;
+                    feedbackBox.className = 'feedback-box feedback-correct show';
+                    document.getElementById('btn-next').style.display = 'inline-block';
+                } else {
+                    // ขั้น 3 (จบเกม)
+                    document.getElementById('question-container').style.display = 'none';
+                    document.getElementById('final-screen').style.display = 'flex';
+                }
+            } else {
+                playSound('wrong');
+                btnElement.classList.add('wrong');
+                btnElement.disabled = true;
+                
+                feedbackBox.innerHTML = qData.feedbacks[opt.value];
+                feedbackBox.className = 'feedback-box feedback-wrong show';
+            }
+        }
+
+        function nextStep() {
+            playSound('click');
+            if (currentStepIndex < questions.length - 1) {
+                currentStepIndex++;
+                renderQuestion();
+            }
+        }
+
+        // --- ระบบคำใบ้ (Scaffolding) ---
+        function showNextHint() {
+            playSound('click');
+            const hintsContainer = document.getElementById('hints-container');
+            hintsContainer.style.display = 'block';
+            
+            if (currentHintLevel < 3) {
+                currentHintLevel++;
+                document.getElementById(`hint-${currentHintLevel}`).style.display = 'block';
+            }
+            
+            // ถ้าแสดงครบ 3 คำใบ้แล้ว ให้ปิดปุ่มคำใบ้
+            if (currentHintLevel >= 3) {
+                document.getElementById('btn-hint').style.display = 'none';
+            }
+        }
+
+        // ป้องกันการเลือก text ภายในเกมเพื่อประสบการณ์ที่ดี
+        document.querySelector('.game-container').addEventListener('selectstart', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
