@@ -3,652 +3,669 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมทบทวนค่าเฉลี่ย: ภารกิจร้านคัพเค้ก</title>
+    <title>เกมการเรียนรู้: การหาค่าเฉลี่ย</title>
     <style>
-        /* CSS Variables สำหรับโทนสีพาสเทล */
+        /* ==========================================
+           1. CSS Variables & Reset
+           ========================================== */
         :root {
-            --bg-color: #FFF5E1; /* ครีมพาสเทล */
-            --card-bg: #FFFFFF;
-            --primary-color: #FFB7B2; /* ชมพูพาสเทล */
-            --primary-hover: #FF9E99;
-            --secondary-color: #CFFDDF; /* มิ้นต์พาสเทล */
-            --secondary-hover: #A0F0BB;
-            --text-main: #5C4A4D;
-            --text-light: #8C7A7D;
-            --correct-color: #B2FBA5;
-            --wrong-color: #FFD1DC;
-            --hint-bg: #FFF0F5;
+            --color-bg: #FFFBF5;        /* ครีมอ่อน */
+            --color-primary: #FFB6C1;   /* ชมพูพาสเทล */
+            --color-secondary: #A8E6CF; /* มิ้นต์พาสเทล */
+            --color-accent: #FFD3B6;    /* ส้ม/พีชพาสเทล */
+            --color-text: #5D4037;      /* น้ำตาลเข้ม */
+            --color-white: #FFFFFF;
+            --color-correct: #A8E6CF;
+            --color-wrong: #FFAAA5;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Sarabun', 'Prompt', sans-serif;
+            color: var(--color-text);
         }
 
         body {
-            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: #f4f4f9;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 10px;
         }
 
-        .game-container {
-            background-color: var(--card-bg);
+        /* ==========================================
+           2. Main Container
+           ========================================== */
+        #game-container {
             width: 100%;
             max-width: 640px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            padding: 30px;
+            background-color: var(--color-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             position: relative;
-            text-align: center;
             overflow: hidden;
-        }
-
-        /* ปุ่มเปิด-ปิดเสียง */
-        .sound-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            z-index: 10;
-        }
-
-        .sound-toggle:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        /* SVG Cupcake Icon Style */
-        .cupcake-icon {
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        /* ช่วงที่ 1: Intro */
-        #intro-screen {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            animation: fadeIn 1s ease-in-out;
+            min-height: 500px;
         }
 
-        .intro-text {
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-            margin-top: 20px;
-            padding: 0 20px;
-        }
-
-        .data-display {
+        /* ==========================================
+           3. Top Bar (Audio & Hints)
+           ========================================== */
+        .top-bar {
             display: flex;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 20;
+        }
+
+        .icon-btn {
+            background: var(--color-white);
+            border: 2px solid var(--color-accent);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
             justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+            background: var(--color-accent);
+        }
+
+        .hint-btn {
+            background: var(--color-secondary);
+            border-color: var(--color-secondary);
+            border-radius: 20px;
+            width: auto;
+            padding: 0 15px;
+            font-weight: bold;
+            font-size: 16px;
+            display: none; /* ซ่อนไว้ก่อน จะแสดงในด่าน 3 */
+        }
+
+        /* ==========================================
+           4. Sticky Question Box (Stage 2)
+           ========================================== */
+        #sticky-box {
+            position: sticky;
+            top: 0;
+            background-color: var(--color-white);
+            padding: 15px 20px;
+            border-bottom: 3px dashed var(--color-primary);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .sticky-text {
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        /* ==========================================
+           5. Stages (Views)
+           ========================================== */
+        .stage {
+            padding: 30px 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex-grow: 1;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .stage.active {
+            display: flex;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #795548;
+        }
+
+        /* ==========================================
+           6. Data Display (Stage 1)
+           ========================================== */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
             gap: 15px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+            width: 100%;
         }
 
         .data-item {
-            background-color: var(--secondary-color);
-            padding: 15px 20px;
-            border-radius: 16px;
-            font-size: 24px;
-            font-weight: bold;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            animation: floatUp 2s infinite ease-in-out alternate;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: var(--color-white);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            animation: floatItem 3s ease-in-out infinite;
         }
 
-        /* ทำให้แต่ละตัวเลขขยับไม่พร้อมกัน */
-        .data-item:nth-child(1) { animation-delay: 0s; }
-        .data-item:nth-child(2) { animation-delay: 0.2s; }
-        .data-item:nth-child(3) { animation-delay: 0.4s; }
-        .data-item:nth-child(4) { animation-delay: 0.6s; }
-        .data-item:nth-child(5) { animation-delay: 0.8s; }
-
-        .btn-start {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
-            box-shadow: 0 4px 15px rgba(255, 183, 178, 0.4);
+        .data-item:nth-child(even) {
+            animation-delay: 1.5s;
         }
 
-        .btn-start:hover {
-            background-color: var(--primary-hover);
-            transform: scale(1.05);
-        }
-
-        /* ช่วงที่ 2 & 3: Game Screen */
-        #game-screen {
-            display: none;
-            flex-direction: column;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        /* กล่องโจทย์ค้างตลอด */
-        .sticky-header {
-            background-color: var(--secondary-color);
-            padding: 15px;
-            border-radius: 16px;
+        .data-value {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            border: 2px dashed #A0F0BB;
+            margin-top: 5px;
+            color: var(--color-text);
         }
 
-        .step-container {
-            background-color: #FDFDFD;
-            border: 2px solid #F0F0F0;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-
-        .question-text {
-            font-size: 20px;
+        /* ==========================================
+           7. Buttons
+           ========================================== */
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: var(--color-text);
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 25px;
-            color: var(--text-main);
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #E5A3AD, var(--shadow);
+            transition: all 0.1s ease;
+            margin-top: 20px;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #E5A3AD;
         }
 
         .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-bottom: 20px;
+            width: 100%;
+            margin-top: 20px;
         }
 
         .option-btn {
-            background-color: #F8F9FA;
-            border: 2px solid #E9ECEF;
+            background-color: var(--color-white);
+            border: 2px solid var(--color-accent);
             padding: 15px;
             font-size: 18px;
-            border-radius: 12px;
+            font-weight: bold;
+            border-radius: 15px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            color: var(--text-main);
         }
 
-        .option-btn:hover:not(:disabled) {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-hover);
-            transform: translateY(-2px);
+        .option-btn:hover {
+            background-color: var(--color-accent);
+            transform: scale(1.02);
         }
 
-        .option-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-        .option-btn.correct {
-            background-color: var(--correct-color);
-            border-color: #82E076;
-            font-weight: bold;
-        }
-
-        .option-btn.wrong {
-            background-color: var(--wrong-color);
-            border-color: #FF9E99;
+        /* ==========================================
+           8. Feedback & Hint Modals
+           ========================================== */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(3px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
         }
 
         .feedback-box {
-            display: none;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            font-size: 16px;
-            line-height: 1.5;
-            animation: fadeIn 0.3s;
+            background: var(--color-white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 90%;
+            width: 400px;
+            border: 4px solid var(--color-wrong);
         }
 
-        .feedback-box.show {
-            display: block;
+        .feedback-box.correct {
+            border-color: var(--color-correct);
         }
 
-        .feedback-wrong {
-            background-color: #FFF0F5;
-            color: #D8436A;
-            border-left: 4px solid #FFB7B2;
+        .feedback-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
         }
 
-        .feedback-correct {
-            background-color: #F0FFF4;
-            color: #2E7D32;
-            border-left: 4px solid #B2FBA5;
+        .feedback-text {
             font-size: 18px;
-            font-weight: bold;
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
 
-        .btn-next, .btn-hint {
-            background-color: var(--text-light);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: 0.2s;
-        }
-
-        .btn-next {
-            background-color: var(--primary-color);
-            display: none;
-            font-weight: bold;
-        }
-
-        .btn-next:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-hint {
-            background-color: #FFE4B5;
-            color: #D2691E;
-            margin-right: 10px;
-        }
-        
-        .btn-hint:hover {
-            background-color: #FFDAB9;
-        }
-
-        .hints-container {
+        .hint-box {
+            background: var(--color-white);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 90%;
+            width: 400px;
+            border: 4px solid var(--color-secondary);
             text-align: left;
-            margin-top: 20px;
-            padding: 15px;
-            background-color: var(--hint-bg);
-            border-radius: 12px;
-            border: 1px dashed #FFB6C1;
-            display: none;
         }
 
-        .hint-item {
+        .hint-list {
+            margin-top: 15px;
+            list-style: none;
+        }
+
+        .hint-list li {
+            background: var(--color-bg);
+            padding: 10px 15px;
+            border-radius: 10px;
             margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #FFE4E1;
-            color: #8B5A2B;
-            font-size: 15px;
-            display: none; /* ซ่อนไว้ก่อน แสดงทีละอัน */
-        }
-        
-        .hint-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .final-celebration {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            animation: fadeIn 1s;
-        }
-
-        .glow-cupcake {
-            transform: scale(2);
-            margin: 30px 0;
-            filter: drop-shadow(0 0 15px rgba(255, 183, 178, 0.8));
-            animation: floatUp 2s infinite alternate ease-in-out;
-        }
-
-        .controls-area {
+            font-size: 16px;
             display: flex;
-            justify-content: center;
+            align-items: center;
             gap: 10px;
-            margin-top: 20px;
+            animation: fadeIn 0.3s ease-out;
         }
 
-        /* Animations */
+        /* ==========================================
+           9. Animations & Utilities
+           ========================================== */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes floatUp {
-            from { transform: translateY(0px); }
-            to { transform: translateY(-8px); }
+        @keyframes floatItem {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
 
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 10px var(--color-primary)); }
+            50% { filter: drop-shadow(0 0 25px var(--color-primary)); }
+        }
+
+        .glow-effect {
+            animation: glow 2s infinite;
+        }
+
+        .svg-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .svg-icon-small {
+            width: 25px;
+            height: 25px;
+        }
+
+        .svg-icon-large {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 480px) {
-            .options-grid {
-                grid-template-columns: 1fr;
-            }
+            .data-grid { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+            .data-item { padding: 5px; }
+            .data-value { font-size: 14px; }
+            .svg-icon { width: 30px; height: 30px; }
+            .options-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <button class="sound-toggle" id="soundBtn" onclick="toggleSound()">🔊</button>
+<div id="game-container">
+    <div class="top-bar">
+        <button class="icon-btn" id="btn-audio" onclick="toggleAudio()" aria-label="เปิด/ปิดเสียง">🔊</button>
+        <button class="icon-btn hint-btn" id="btn-hint" onclick="showHint()">💡 ขอคำใบ้</button>
+    </div>
 
-        <div id="intro-screen">
-            <div id="main-icon" style="width: 80px; height: 80px;"></div>
-            
-            <div class="intro-text">
-                “มาดูอีกตัวอย่างกันนะ ในห้าวัน ร้านเบเกอรี่ขายคัพเค้กได้วันละยี่สิบ สามสิบ สี่สิบ ห้าสิบ และหกสิบชิ้น”
+    <div id="sticky-box">
+        <div id="sticky-icon-container"></div>
+        <div class="sticky-text">ข้อมูลยอดขาย 10 วัน: 35, 37, 38, 40, 41, 36, 39, 40, 42, 32</div>
+    </div>
+
+    <div id="stage-intro" class="stage active">
+        <div class="title">คราวนี้ลองดูตัวอย่างนี้นะ</div>
+        <div class="subtitle">ร้านกาแฟแห่งหนึ่งบันทึกจำนวนแก้วที่ขายได้ในสิบวันเป็น<br>35, 37, 38, 40, 41, 36, 39, 40, 42 และ 32 แก้ว</div>
+        
+        <div class="data-grid" id="intro-data">
             </div>
 
-            <div class="data-display" id="intro-data">
-                </div>
+        <button class="btn-primary" onclick="startGame()">☕ เริ่มภารกิจ</button>
+    </div>
 
-            <button class="btn-start" onclick="startGame()">เริ่มภารกิจ</button>
-        </div>
-
-        <div id="game-screen">
-            
-            <div class="sticky-header">
-                <span id="tiny-icon-header" style="width: 24px; height: 24px;"></span>
-                ข้อมูลยอดขาย 5 วัน: 20, 30, 40, 50, 60
+    <div id="stage-question" class="stage">
+        <div id="question-icon-container" style="margin-bottom: 10px;"></div>
+        <div class="title" id="question-text">คำถาม</div>
+        <div class="options-grid" id="options-container">
             </div>
+    </div>
 
-            <div class="step-container" id="question-container">
-                <div class="question-text" id="q-text"></div>
-                <div class="options-grid" id="options-grid">
-                    </div>
-                
-                <div id="feedback-box" class="feedback-box"></div>
-                
-                <div class="controls-area">
-                    <button class="btn-hint" id="btn-hint" onclick="showNextHint()">💡 ขอคำใบ้</button>
-                    <button class="btn-next" id="btn-next" onclick="nextStep()">ขั้นต่อไป ➔</button>
-                </div>
-                
-                <div class="hints-container" id="hints-container">
-                    <div class="hint-item" id="hint-1">💡 Hint 1: ลองนำข้อมูลทั้งหมดมารวมกันก่อน</div>
-                    <div class="hint-item" id="hint-2">💡 Hint 2: เมื่อรวมกันแล้วจะได้ทั้งหมด 200</div>
-                    <div class="hint-item" id="hint-3">💡 Hint 3: จากนั้นนำไปหารด้วยจำนวนข้อมูล 5 วัน</div>
-                </div>
-            </div>
+    <div id="stage-win" class="stage">
+        <div class="title">ถูกต้อง 🎉</div>
+        <div class="subtitle" style="font-size: 20px; font-weight: bold; color: var(--color-primary);">ค่าเฉลี่ยคือ 38 แก้วต่อวัน</div>
+        <div id="win-icon-container" class="glow-effect"></div>
+    </div>
 
-            <div class="final-celebration" id="final-screen">
-                <div class="glow-cupcake" id="glow-icon" style="width: 60px; height: 60px;"></div>
-                <h2 style="color: var(--text-main); margin-bottom: 5px;">ถูกต้อง 🎉</h2>
-                <h3 style="color: #2E7D32; margin-top: 0;">ค่าเฉลี่ยคือ 40 ชิ้นต่อวัน</h3>
-            </div>
-
+    <div id="feedback-overlay" class="overlay">
+        <div class="feedback-box" id="feedback-box">
+            <div class="feedback-icon" id="feedback-icon">❌</div>
+            <div class="feedback-text" id="feedback-text">ข้อความอธิบาย</div>
+            <button class="btn-primary" id="feedback-btn" onclick="closeFeedback()">ลองใหม่</button>
         </div>
     </div>
 
-    <script>
-        // --- ส่วนของการสร้าง SVG Cupcake ---
-        const getCupcakeSVG = () => `
-        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-            <path d="M18 36 L24 60 L40 60 L46 36 Z" fill="#E6C280"/>
-            <line x1="23" y1="36" x2="27" y2="60" stroke="#C8A058" stroke-width="2"/>
-            <line x1="32" y1="36" x2="32" y2="60" stroke="#C8A058" stroke-width="2"/>
-            <line x1="41" y1="36" x2="37" y2="60" stroke="#C8A058" stroke-width="2"/>
-            
-            <path d="M12 36 Q 10 20 32 8 Q 54 20 52 36 Z" fill="#FFB7B2"/>
-            <path d="M8 36 Q 16 42 24 36 Q 32 42 40 36 Q 48 42 56 36 Q 52 28 48 30 Z" fill="#FFB7B2"/>
-            
-            <line x1="22" y1="26" x2="26" y2="28" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-            <line x1="40" y1="20" x2="44" y2="22" stroke="#CFFDDF" stroke-width="2" stroke-linecap="round"/>
-            <line x1="30" y1="16" x2="32" y2="18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-            <line x1="26" y1="32" x2="28" y2="34" stroke="#CFFDDF" stroke-width="2" stroke-linecap="round"/>
-            <line x1="44" y1="28" x2="42" y2="30" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+    <div id="hint-overlay" class="overlay" style="align-items: flex-start; padding-top: 60px;">
+        <div class="hint-box">
+            <div class="title" style="margin-bottom: 5px;">💡 คำใบ้</div>
+            <ul class="hint-list" id="hint-list">
+                </ul>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-primary" onclick="closeHint()">เข้าใจแล้ว</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ==========================================
+       1. SVG Coffee Cup Template (Inline)
+       ========================================== */
+    const getCoffeeIcon = (className = 'svg-icon') => `
+        <svg class="${className}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 65 45 C 85 45 85 75 65 75" fill="none" stroke="#D7CCC8" stroke-width="8" stroke-linecap="round"/>
+            <path d="M 25 35 C 25 35 30 85 30 85 C 30 95 70 95 70 85 C 70 85 75 35 75 35 Z" fill="#EFEBE9"/>
+            <path d="M 27 50 L 73 50 L 71 70 L 29 70 Z" fill="#A8E6CF"/>
+            <path d="M 20 35 C 20 20 80 20 80 35 C 80 45 20 45 20 35 Z" fill="#FFB6C1"/>
+            <circle cx="42" cy="60" r="2.5" fill="#5D4037"/>
+            <circle cx="58" cy="60" r="2.5" fill="#5D4037"/>
+            <path d="M 47 63 Q 50 67 53 63" fill="none" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        `;
+    `;
 
-        // ใส่ SVG เข้าไปในจุดต่างๆ
-        document.getElementById('main-icon').innerHTML = getCupcakeSVG();
-        document.getElementById('tiny-icon-header').innerHTML = getCupcakeSVG();
-        document.getElementById('glow-icon').innerHTML = getCupcakeSVG();
+    /* ==========================================
+       2. Game Data
+       ========================================== */
+    const rawData = [35, 37, 38, 40, 41, 36, 39, 40, 42, 32];
+    
+    const questions = [
+        {
+            step: 1,
+            text: "ขั้นที่ 1: เมื่อนำข้อมูลทั้งหมดมารวมกัน จะได้เท่าไร",
+            options: [
+                { label: 'A', value: '360', isCorrect: false, feedback: "ยังไม่ถูก ผลรวมนี้ยังน้อยเกินไป ลองบวกข้อมูลทั้ง 10 วันให้ครบอีกครั้ง" },
+                { label: 'B', value: '370', isCorrect: false, feedback: "ผลรวมนี้ยังไม่ครบ เพราะข้อมูลบางวันยังไม่ได้รวมอย่างถูกต้อง" },
+                { label: 'C', value: '380', isCorrect: true, feedback: "ถูกต้อง ผลรวมทั้งหมดคือ 380" },
+                { label: 'D', value: '390', isCorrect: false, feedback: "ผลรวมนี้มากเกินไป ลองบวกทีละจำนวนอย่างระมัดระวังอีกครั้ง" }
+            ]
+        },
+        {
+            step: 2,
+            text: "ขั้นที่ 2: ข้อมูลชุดนี้มีทั้งหมดกี่วัน",
+            options: [
+                { label: 'A', value: '8', isCorrect: false, feedback: "ข้อมูลมีมากกว่า 8 วัน ลองนับจำนวนข้อมูลใหม่ให้ครบ" },
+                { label: 'B', value: '9', isCorrect: false, feedback: "ข้อมูลมี 10 ค่า ไม่ใช่ 9 ค่า" },
+                { label: 'C', value: '10', isCorrect: true, feedback: "ถูกต้อง มีข้อมูลทั้งหมด 10 วัน" },
+                { label: 'D', value: '380', isCorrect: false, feedback: "380 คือผลรวมของข้อมูลทั้งหมด ไม่ใช่จำนวนวัน" }
+            ]
+        },
+        {
+            step: 3,
+            text: "ขั้นที่ 3: เมื่อนำผลรวม 380 หารด้วย 10 วัน จะได้ค่าเฉลี่ยเท่าไร",
+            options: [
+                { label: 'A', value: '28', isCorrect: false, feedback: "28 น้อยเกินไป เพราะข้อมูลส่วนใหญ่มีค่าอยู่ช่วงประมาณ 35 ถึง 42" },
+                { label: 'B', value: '38', isCorrect: true, feedback: "ถูกต้อง" }, // ไปหน้าจอ Win
+                { label: 'C', value: '48', isCorrect: false, feedback: "48 มากเกินไป เพราะข้อมูลทั้งหมดไม่ได้มีค่าสูงขนาดนั้น" },
+                { label: 'D', value: '380', isCorrect: false, feedback: "380 เป็นผลรวมของข้อมูลทั้งหมด ยังไม่ได้หารด้วยจำนวนวัน" }
+            ]
+        }
+    ];
 
-        // สร้างข้อมูลหน้า Intro
-        const introData = [20, 30, 40, 50, 60];
-        const introContainer = document.getElementById('intro-data');
-        introData.forEach(num => {
-            const div = document.createElement('div');
-            div.className = 'data-item';
-            div.innerHTML = `<div style="width: 32px; height: 32px;">${getCupcakeSVG()}</div><span>${num}</span>`;
-            introContainer.appendChild(div);
+    const allHints = [
+        "ลองนำข้อมูลทั้งหมดมารวมกันก่อน",
+        "เมื่อรวมกันแล้วจะได้ทั้งหมด 380",
+        "จากนั้นนำไปหารด้วยจำนวนข้อมูล 10 วัน"
+    ];
+
+    /* ==========================================
+       3. State Variables
+       ========================================== */
+    let currentStepIndex = 0;
+    let revealedHintsCount = 0;
+    
+    /* ==========================================
+       4. Audio System (Web Audio API)
+       ========================================== */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function toggleAudio() {
+        isMuted = !isMuted;
+        document.getElementById('btn-audio').innerText = isMuted ? '🔇' : '🔊';
+        playSound('click');
+    }
+
+    function playSound(type) {
+        if (isMuted || !audioCtx) return;
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'correct') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.setValueAtTime(600, now + 0.1);
+            osc.frequency.setValueAtTime(800, now + 0.2);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(150, now + 0.3);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+    }
+
+    /* ==========================================
+       5. Game Logic & UI Render
+       ========================================== */
+    
+    // ตั้งค่าเริ่มต้นของหน้าจอ Intro
+    function setupIntro() {
+        const grid = document.getElementById('intro-data');
+        rawData.forEach(num => {
+            const item = document.createElement('div');
+            item.className = 'data-item';
+            item.innerHTML = getCoffeeIcon('svg-icon') + `<div class="data-value">${num}</div>`;
+            grid.appendChild(item);
         });
 
-        // --- ระบบเสียง (Web Audio API) ---
-        let audioCtx;
-        let isMuted = false;
+        // แทรกไอคอนในจุดต่างๆ
+        document.getElementById('sticky-icon-container').innerHTML = getCoffeeIcon('svg-icon-small');
+        document.getElementById('question-icon-container').innerHTML = getCoffeeIcon('svg-icon');
+        document.getElementById('win-icon-container').innerHTML = getCoffeeIcon('svg-icon-large');
+    }
 
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function startGame() {
+        initAudio();
+        playSound('click');
+        
+        // ซ่อน Intro แสดง Question และ Sticky Box
+        document.getElementById('stage-intro').classList.remove('active');
+        document.getElementById('stage-question').classList.add('active');
+        document.getElementById('sticky-box').style.display = 'flex';
+        document.getElementById('btn-hint').style.display = 'inline-block';
+
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = questions[currentStepIndex];
+        document.getElementById('question-text').innerText = qData.text;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+
+        qData.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<span>${opt.label}.</span> <span>${opt.value}</span>`;
+            btn.onclick = () => handleAnswer(opt);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(selectedOption) {
+        playSound('click');
+        const box = document.getElementById('feedback-box');
+        const icon = document.getElementById('feedback-icon');
+        const text = document.getElementById('feedback-text');
+        const btn = document.getElementById('feedback-btn');
+
+        if (selectedOption.isCorrect) {
+            playSound('correct');
+            // หากเป็นข้อสุดท้าย (หาค่าเฉลี่ย)
+            if (currentStepIndex === 2) {
+                showWinScreen();
+                return;
             }
-            if(audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
 
-        function toggleSound() {
-            isMuted = !isMuted;
-            document.getElementById('soundBtn').innerText = isMuted ? '🔇' : '🔊';
-        }
-
-        function playSound(type) {
-            if (isMuted) return;
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            if (type === 'click') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } 
-            else if (type === 'wrong') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } 
-            else if (type === 'correct') {
-                // Arpeggio ขึ้น (C5 E5 G5 C6)
-                osc.type = 'sine';
-                const now = audioCtx.currentTime;
-                
-                osc.frequency.setValueAtTime(523.25, now); // C5
-                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
-                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
-                
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.setValueAtTime(0.3, now + 0.3);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                
-                osc.start();
-                osc.stop(now + 0.6);
-            }
-        }
-
-        // --- ข้อมูลคำถาม 3 ขั้นตอน ---
-        const questions = [
-            {
-                step: 1,
-                question: "ขั้นที่ 1: เมื่อนำข้อมูลทั้งหมดมารวมกัน จะได้เท่าไร",
-                options: [
-                    { label: "A", value: 100, text: "100" },
-                    { label: "B", value: 150, text: "150" },
-                    { label: "C", value: 200, text: "200", correct: true },
-                    { label: "D", value: 300, text: "300" }
-                ],
-                feedbacks: {
-                    100: "ยังไม่ถูก ลองรวมข้อมูลทั้ง 5 วันให้ครบอีกครั้ง",
-                    150: "ผลรวมนี้ยังน้อยเกินไป เพราะยังรวมข้อมูลได้ไม่ครบ",
-                    300: "ผลรวมนี้มากเกินไป ลองบวกทีละจำนวนอีกครั้ง"
-                },
-                correctMsg: "ถูกต้อง ผลรวมทั้งหมดคือ 200"
-            },
-            {
-                step: 2,
-                question: "ขั้นที่ 2: ข้อมูลชุดนี้มีทั้งหมดกี่วัน",
-                options: [
-                    { label: "A", value: 4, text: "4" },
-                    { label: "B", value: 5, text: "5", correct: true },
-                    { label: "C", value: 6, text: "6" },
-                    { label: "D", value: 200, text: "200" }
-                ],
-                feedbacks: {
-                    4: "ข้อมูลมีมากกว่า 4 วัน ลองนับใหม่ให้ครบ",
-                    6: "ข้อมูลมีเพียง 5 ค่า ไม่ใช่ 6 ค่า",
-                    200: "200 คือผลรวม ไม่ใช่จำนวนวัน"
-                },
-                correctMsg: "ถูกต้อง มีข้อมูลทั้งหมด 5 วัน"
-            },
-            {
-                step: 3,
-                question: "ขั้นที่ 3: เมื่อนำผลรวม 200 หารด้วย 5 วัน จะได้ค่าเฉลี่ยเท่าไร",
-                options: [
-                    { label: "A", value: 30, text: "30" },
-                    { label: "B", value: 40, text: "40", correct: true },
-                    { label: "C", value: 50, text: "50" },
-                    { label: "D", value: 200, text: "200" }
-                ],
-                feedbacks: {
-                    30: "30 เป็นค่าน้อยเกินไป เพราะข้อมูลบางวันสูงถึง 50 และ 60",
-                    50: "50 เป็นค่ามากเกินไป เพราะมีหลายวันที่ค่าน้อยกว่า เช่น 20 และ 30",
-                    200: "200 เป็นผลรวมของข้อมูลทั้งหมด ยังไม่ได้หารด้วยจำนวนวัน"
-                },
-                correctMsg: "" // ของขั้น 3 จะแสดงที่หน้าฉลองจบ
-            }
-        ];
-
-        let currentStepIndex = 0;
-        let currentHintLevel = 0;
-        let isStepAnswered = false;
-
-        function startGame() {
-            playSound('click');
-            document.getElementById('intro-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            renderQuestion();
-        }
-
-        function renderQuestion() {
-            const qData = questions[currentStepIndex];
-            document.getElementById('q-text').innerText = qData.question;
-            
-            const optionsGrid = document.getElementById('options-grid');
-            optionsGrid.innerHTML = '';
-            
-            qData.options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                // นำ icon จิ๋วใส่ในปุ่ม
-                btn.innerHTML = `<span style="width: 16px; height: 16px;">${getCupcakeSVG()}</span> ${opt.label}. ${opt.text}`;
-                btn.onclick = () => selectOption(opt, btn);
-                optionsGrid.appendChild(btn);
-            });
-
-            // รีเซ็ต UI ของกล่องตอบรับ
-            const feedbackBox = document.getElementById('feedback-box');
-            feedbackBox.className = 'feedback-box';
-            feedbackBox.innerHTML = '';
-            
-            document.getElementById('btn-next').style.display = 'none';
-            isStepAnswered = false;
-        }
-
-        function selectOption(opt, btnElement) {
-            if (isStepAnswered) return;
-            
-            const qData = questions[currentStepIndex];
-            const feedbackBox = document.getElementById('feedback-box');
-            
-            if (opt.correct) {
-                playSound('correct');
-                btnElement.classList.add('correct');
-                isStepAnswered = true;
-                
-                // Disable ปุ่มอื่นๆ
-                Array.from(document.getElementById('options-grid').children).forEach(btn => {
-                    if (btn !== btnElement) btn.disabled = true;
-                });
-
-                if (currentStepIndex < 2) {
-                    // ขั้น 1 และ 2
-                    feedbackBox.innerHTML = qData.correctMsg;
-                    feedbackBox.className = 'feedback-box feedback-correct show';
-                    document.getElementById('btn-next').style.display = 'inline-block';
-                } else {
-                    // ขั้น 3 (จบเกม)
-                    document.getElementById('question-container').style.display = 'none';
-                    document.getElementById('final-screen').style.display = 'flex';
-                }
-            } else {
-                playSound('wrong');
-                btnElement.classList.add('wrong');
-                btnElement.disabled = true;
-                
-                feedbackBox.innerHTML = qData.feedbacks[opt.value];
-                feedbackBox.className = 'feedback-box feedback-wrong show';
-            }
-        }
-
-        function nextStep() {
-            playSound('click');
-            if (currentStepIndex < questions.length - 1) {
+            // หากเป็นข้ออื่นที่ตอบถูก
+            box.className = 'feedback-box correct';
+            icon.innerText = '✅';
+            text.innerText = selectedOption.feedback;
+            btn.innerText = 'ไปขั้นถัดไป';
+            btn.onclick = () => {
+                playSound('click');
+                closeFeedback();
                 currentStepIndex++;
                 renderQuestion();
-            }
+            };
+        } else {
+            playSound('wrong');
+            // หากตอบผิด
+            box.className = 'feedback-box';
+            icon.innerText = '❌';
+            text.innerText = selectedOption.feedback;
+            btn.innerText = 'ลองใหม่';
+            btn.onclick = () => {
+                playSound('click');
+                closeFeedback();
+            };
         }
 
-        // --- ระบบคำใบ้ (Scaffolding) ---
-        function showNextHint() {
-            playSound('click');
-            const hintsContainer = document.getElementById('hints-container');
-            hintsContainer.style.display = 'block';
+        document.getElementById('feedback-overlay').style.display = 'flex';
+    }
+
+    function closeFeedback() {
+        document.getElementById('feedback-overlay').style.display = 'none';
+    }
+
+    function showWinScreen() {
+        document.getElementById('stage-question').classList.remove('active');
+        document.getElementById('sticky-box').style.display = 'none';
+        document.getElementById('btn-hint').style.display = 'none';
+        document.getElementById('stage-win').classList.add('active');
+        document.getElementById('feedback-overlay').style.display = 'none';
+    }
+
+    /* ==========================================
+       6. Scaffolding (Hint System)
+       ========================================== */
+    function showHint() {
+        playSound('click');
+        const overlay = document.getElementById('hint-overlay');
+        const list = document.getElementById('hint-list');
+        
+        // เพิ่มคำใบ้ใหม่ถ้ายังไม่ครบ
+        if (revealedHintsCount < allHints.length) {
+            revealedHintsCount++;
+            list.innerHTML = ''; // เคลียร์แล้ววาดใหม่เพื่ออนิเมชั่น
             
-            if (currentHintLevel < 3) {
-                currentHintLevel++;
-                document.getElementById(`hint-${currentHintLevel}`).style.display = 'block';
-            }
-            
-            // ถ้าแสดงครบ 3 คำใบ้แล้ว ให้ปิดปุ่มคำใบ้
-            if (currentHintLevel >= 3) {
-                document.getElementById('btn-hint').style.display = 'none';
+            for (let i = 0; i < revealedHintsCount; i++) {
+                const li = document.createElement('li');
+                li.innerHTML = getCoffeeIcon('svg-icon-small') + `<span>${allHints[i]}</span>`;
+                list.appendChild(li);
             }
         }
+        
+        overlay.style.display = 'flex';
+    }
 
-        // ป้องกันการเลือก text ภายในเกมเพื่อประสบการณ์ที่ดี
-        document.querySelector('.game-container').addEventListener('selectstart', (e) => e.preventDefault());
-    </script>
+    function closeHint() {
+        playSound('click');
+        document.getElementById('hint-overlay').style.display = 'none';
+    }
+
+    // Initialize game
+    window.onload = setupIntro;
+
+</script>
 </body>
 </html>
